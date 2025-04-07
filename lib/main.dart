@@ -27,6 +27,8 @@ class MyApp extends StatelessWidget {
   }
 }
 
+final _formKey = GlobalKey<FormState>();
+
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
   final String title;
@@ -57,8 +59,16 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void clearControllers() {
+    dateController.clear();
+    timeController.clear();
+    nameController.clear();
+    detailsController.clear();
+  }
+
 Future<void> openAddTask(BuildContext context) async {
     await showDialog(
+      barrierDismissible: false,
       context: context,
       builder:
           (context) => AlertDialog(
@@ -67,98 +77,122 @@ Future<void> openAddTask(BuildContext context) async {
               "Add New Task",
               style: const TextStyle(color: Colors.black),
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 12,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    labelText: "Name",
-                    hintText: "Give the task a name",
-                    border: UnderlineInputBorder(),
-                    suffixIcon: IconButton(
-                      onPressed: () {
-                        nameController.clear();
-                      },
-                      icon: const Icon(Icons.clear),
-                    ),
-                  ),
-                ),
-                TextField(
-                  controller: detailsController,
-                  decoration: InputDecoration(
-                    hintText: "Write a short description",
-                    border: UnderlineInputBorder(),
-                    labelText: "Details",
-                    suffixIcon: IconButton(
-                      onPressed: () {
-                        detailsController.clear();
-                      },
-                      icon: const Icon(Icons.clear),
-                    ),
-                  ),
-                ),
-                TextField(
-                  controller: dateController,
-                  readOnly: true,
-                  decoration: InputDecoration(
-                    labelText: "Date",
-                    hintText: "Set a date",
-                    border: UnderlineInputBorder(),
-                    suffixIcon: IconButton(
-                      onPressed: () {
-                        _selectDate(context);
-                      },
-                      icon: const Icon(Icons.calendar_month_outlined),
-                    ),
-                  ),
-                ),
-                TextField(
-                  controller: timeController,
-                  readOnly: true,
-                  decoration: InputDecoration(
-                    labelText: "Time (optional)",
-                    hintText: "Set a time",
-                    border: UnderlineInputBorder(),
-                    suffixIcon: IconButton(
-                      onPressed: () {
-                        _selectTime(context);
-                      },
-                      icon: const Icon(Icons.more_time_outlined),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("Cancel"),
-              ),
-              TextButton(
-                onPressed: () {
-                  createTask(
-                    false,
-                    dateController.text,
-                    timeController.text,
-                    nameController.text,
-                    detailsController.text,
-                  );
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Task Added Successfully',
+            content: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 12,
+                children: [
+                  TextFormField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      labelText: "Name (required)",
+                      hintText: "Give the task a name",
+                      border: UnderlineInputBorder(),
+                      suffixIcon: IconButton(
+                        onPressed: () {
+                          nameController.clear();
+                        },
+                        icon: const Icon(Icons.clear),
                       ),
                     ),
-                  );
+                    validator: (name) => name!.isEmpty 
+                      ? "Please provide a name"
+                      : null,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                  ),
+                  TextField(
+                    controller: detailsController,
+                    decoration: InputDecoration(
+                      hintText: "Write a short description",
+                      border: UnderlineInputBorder(),
+                      labelText: "Details",
+                      suffixIcon: IconButton(
+                        onPressed: () {
+                          detailsController.clear();
+                        },
+                        icon: const Icon(Icons.clear),
+                      ),
+                    ),
+                  ),
+                  TextField(
+                    controller: dateController,
+                    readOnly: true,
+                    decoration: InputDecoration(
+                      labelText: "Date",
+                      hintText: "Set a date",
+                      border: UnderlineInputBorder(),
+                      suffixIcon: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              _selectDate(context);
+                            },
+                            icon: const Icon(Icons.calendar_month_outlined),
+                          ),
+                          IconButton(onPressed: () => dateController.clear(), icon: const Icon(Icons.clear)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  TextField(
+                    controller: timeController,
+                    readOnly: true,
+                    decoration: InputDecoration(
+                      labelText: "Time",
+                      hintText: "Set a time",
+                      border: UnderlineInputBorder(),
+                      suffixIcon: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              _selectTime(context);
+                            },
+                            icon: const Icon(Icons.more_time_outlined),
+                          ),
+                          IconButton(onPressed: () => timeController.clear(), icon: const Icon(Icons.clear)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  clearControllers();
+                  Navigator.pop(context);
                 },
-                child: Text(
-                  "Add Task",
-                  style: TextStyle(backgroundColor: Colors.blue),
+                child: Text("Cancel"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    createTask(
+                      false,
+                      dateController.text,
+                      timeController.text,
+                      nameController.text,
+                      detailsController.text,
+                    );
+                    clearControllers();
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Task Added Successfully')),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue, // Background color
+                  foregroundColor: Colors.white, // Text color
                 ),
+                child: Text("Add Task"),
               ),
             ],
           ),
