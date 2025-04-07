@@ -64,7 +64,7 @@ Future<void> openAddTask(BuildContext context) async {
           (context) => AlertDialog(
             backgroundColor: Colors.white,
             title: Text(
-              "Create New Task",
+              "Add New Task",
               style: const TextStyle(color: Colors.black),
             ),
             content: Column(
@@ -146,8 +146,19 @@ Future<void> openAddTask(BuildContext context) async {
                     nameController.text,
                     detailsController.text,
                   );
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Task Added Successfully',
+                      ),
+                    ),
+                  );
                 },
-                child: Text("Submit Item"),
+                child: Text(
+                  "Add Task",
+                  style: TextStyle(backgroundColor: Colors.blue),
+                ),
               ),
             ],
           ),
@@ -194,6 +205,9 @@ Future<void> openAddTask(BuildContext context) async {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            // ListView.builder(
+            //   itemBuilder: itemBuilder
+            // ),
           ],
         ),
       ),
@@ -201,7 +215,7 @@ Future<void> openAddTask(BuildContext context) async {
         onPressed: () {
           openAddTask(context);
         }, 
-        tooltip: "create task",
+        tooltip: "Create task",
         child: const Icon(Icons.add),
       ),
     );
