@@ -38,6 +38,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
   final TextEditingController nameController = TextEditingController();
   final TextEditingController detailsController = TextEditingController();
   final TextEditingController dateController = TextEditingController();
@@ -66,7 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
     detailsController.clear();
   }
 
-Future<void> openAddTask(BuildContext context) async {
+  Future<void> openAddTask(BuildContext context) async {
     await showDialog(
       barrierDismissible: false,
       context: context,
@@ -228,6 +230,18 @@ Future<void> openAddTask(BuildContext context) async {
     }
   }
 
+  // Method to delete a task
+  Future<void> deleteTask(String taskId) async {
+    await _firestore.collection('list').doc(taskId).delete();
+  }
+
+  // Method to toggle task completion
+  Future<void> toggleTaskCompletion(String taskId, bool currentStatus) async {
+    await _firestore.collection('list').doc(taskId).update({
+      'isCompleted': !currentStatus,
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -235,15 +249,46 @@ Future<void> openAddTask(BuildContext context) async {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            // ListView.builder(
-            //   itemBuilder: itemBuilder
-            // ),
-          ],
-        ),
+      body: StreamBuilder(
+        stream: _firestore.collection('list').orderBy('date', descending: true).orderBy('time', descending: true).snapshots(),
+        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          final tasks = snapshot.data!.docs;
+
+          return ListView.builder(
+            itemCount: tasks.length,
+            itemBuilder: (context, index) {
+              final task = tasks[index];
+              final taskId = task.id;
+              final taskTitle = task['name'];
+              final taskDescription = task['details'];
+              final taskIsCompleted = task['isCompleted'];
+
+              return Card(
+                margin: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                child: ListTile(
+                  title: Text(taskTitle),
+                  subtitle: Text(taskDescription),
+                  leading: Icon(
+                    taskIsCompleted ? Icons.check_box : Icons.check_box_outline_blank,
+                    color: taskIsCompleted ? Colors.green : Colors.grey,
+                  ),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () => deleteTask(taskId),
+                  ),
+                  onTap: () => toggleTaskCompletion(taskId, taskIsCompleted),
+                ),
+              );
+            },
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
