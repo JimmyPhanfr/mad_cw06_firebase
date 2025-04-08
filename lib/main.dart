@@ -250,7 +250,7 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: StreamBuilder(
-        stream: _firestore.collection('list').orderBy('date', descending: true).orderBy('time', descending: true).snapshots(),
+        stream: _firestore.collection('list').orderBy('date').orderBy('time').snapshots(),
         builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -266,15 +266,26 @@ class _MyHomePageState extends State<MyHomePage> {
             itemBuilder: (context, index) {
               final task = tasks[index];
               final taskId = task.id;
-              final taskTitle = task['name'];
-              final taskDescription = task['details'];
+              final taskName = task['name'];
+              final taskDetails = task['details'];
               final taskIsCompleted = task['isCompleted'];
+              final taskDate = task['date'];
+              final taskTime = task['time'];
 
               return Card(
                 margin: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
                 child: ListTile(
-                  title: Text(taskTitle),
-                  subtitle: Text(taskDescription),
+                  title: Text(taskName),
+                  subtitle: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(taskDetails),
+                      Text(taskDate),
+                      Text(taskTime),
+                    ],
+                  ),
                   leading: Icon(
                     taskIsCompleted ? Icons.check_box : Icons.check_box_outline_blank,
                     color: taskIsCompleted ? Colors.green : Colors.grey,
